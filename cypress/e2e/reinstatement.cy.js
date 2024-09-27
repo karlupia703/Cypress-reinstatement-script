@@ -27,7 +27,7 @@ const createUser = (userData) => {
   cy.get('body').click(0, 0);
 
   cy.get('[data-test-id="modal-cancelaction-responsibleform-create"]').click(); // cencel button
-  
+
   cy.get('[data-test-id="button-responsibleform-create"]').click(); // create button
   cy.get('[data-test-id="custombtn-modal-responsibleform-create-submit"]').click();// inside create button
 
@@ -53,8 +53,20 @@ const createUser = (userData) => {
 
   cy.get('#notistack-snackbar > .MuiBox-root').should('contain', 'Reinstatement Responsible created successfully')
 }
+const searchUUID = async () => {
+  const row = await cy.get('[data-test-id="tablebody-desktoptable-reinstatement-responsibles-table-list-page-reinstatement"]')
+    .should('exist')  // Ensure the table exists
+    .children()       // Get the children of the table (e.g., rows)
+    .first()          // Get the first row
+  // .then(($row) => {
+  const dataTestId = row.attr('data-test-id');  // Extract the 'data-test-id' attribute
+  const uuidMatch = dataTestId.match(/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/);  // Refined regex to match only the UUID
+  const uuid = uuidMatch ? uuidMatch[0] : 'No UUID found';  // Check if a match was found
 
-describe('User create', () => {
+  return uuid;
+};
+
+describe('Reinstatement', () => {
   beforeEach(() => {
     cy.visit('http://localhost:3000/reinstatement-responsibles')
     cy.wait(2000)
@@ -76,62 +88,64 @@ describe('User create', () => {
     cy.get('#notistack-snackbar > .MuiBox-root').should('contain', 'Email already exists')
   })
 
-  //Delete user case  
-  it.skip('Delete user', () => {
-    cy.get('[data-test-id="tablebodycell-873318b5-8d5d-4786-97b0-1f57ad24f01f-deleteicon-desktoptable-reinstatement-responsibles-table-list-page-reinstatement"]').click();
-    cy.get('[data-test-id="custombtn-dialogBox-submit-alertbox-delete-reinstatement-responsibles-table-list-page-reinstatement"]').click()
-    cy.get('[class="notistack-Snackbar go3963613292"]').should('contain.text', 'was successfully deleted');
-    cy.log('Delete succuessfully')
+  it('User search', async () => {
+    const userData = createUserData()
+
+    const searchUser = async () => {
+      const row = await cy.get('[data-test-id="tablebody-desktoptable-reinstatement-responsibles-table-list-page-reinstatement"]')
+        .should('exist')  // Ensure the table exists
+        .children()       // Get the children of the table (e.g., rows)
+        .first()          // Get the first row
+      // .then(($row) => {
+      const dataTestId = row.attr('data-test-id');  // Extract the 'data-test-id' attribute
+      const uuidMatch = dataTestId.match(/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/);  // Refined regex to match only the UUID
+      const uuid = uuidMatch ? uuidMatch[0] : 'No UUID found';  // Check if a match was found
+      const userName = row.find(`[data-test-id="tablebodycell-${uuid}-responsiblename-desktoptable-reinstatement-responsibles-table-list-page-reinstatement"]`).text().trim();
+      console.log('Extracted userName:', userName);
+      if (userName) {  // Check if userName is not empty
+        cy.get('[data-test-id="input-search-searchbar-page-reinstatement"]').type(userName);
+        cy.wait(2000);
+      } else {
+        throw new Error('No result found');
+      }
+      return uuid;
+      // return uuid;
+      // });
+    };
+    const dataid = await searchUser();
+    cy.log('.sdasdasdasdasdasd', dataid)
+
   })
 
-  it.only('Search, edit and view user detials', () => {
-    cy.get('[data-test-id="input-search-searchbar-page-reinstatement"]').type('UserEZur'); // click on search field
-    cy.wait(500)
-    
-    //click on view icon
-   // cy.get('tablebody-desktoptable-reinstatement-responsibles-table-list-page-reinstatement').children();
-    cy.get('[data-test-id="tablebodycell-90108dda-ac55-49a9-80bc-9dab8950c25f-viewicon-desktoptable-reinstatement-responsibles-table-list-page-reinstatement"]').click({ multiple: true })
-    cy.get('[data-test-id="customdialog-canclebtn-view-viewresponsible-reinstatement-responsibles-table-list-page-reinstatement"]').click()
+  it('User view', async () => {
+    const userData = createUserData()
 
-    // edit profile
-    cy.get('[data-test-id="tablebodycell-90108dda-ac55-49a9-80bc-9dab8950c25f-editicon-desktoptable-reinstatement-responsibles-table-list-page-reinstatement"]').click()
-    cy.get('[data-test-id="customtextfield-input-responsiblelastname-responsiblitiesform-edit"]')
-      .clear().type("Dee");
-    cy.get('[data-test-id="custombtn-modal-responsiblitiesform-edit-submit"]').click();
-    cy.get('[data-test-id="dialogBox-title-alertBox-responsiblitiesform-edit"]').should('contain', 'Edit Reinstatement Responsible')
-    cy.get('[data-test-id="dialogBox-content-alertBox-responsiblitiesform-edit"]').should('contain', 'Are you sure you want to save the changes?')
-    cy.get('[data-test-id="custombtn-dialogBox-submit-alertBox-responsiblitiesform-edit"]').click();
-    cy.get('#notistack-snackbar > .MuiBox-root').should('contain', "Saved successfully")
-    cy.wait(500)
-    //filter
-    cy.get('[data-test-id="icon-arrowdown-autocompletefilter-destop-filter-headquarter-page-reinstatement"]').click();
+    const uuid = await searchUUID()
+    cy.get(`[data-test-id="tablebodycell-${uuid}-viewicon-desktoptable-reinstatement-responsibles-table-list-page-reinstatement"]`).click()
+    cy.get('[data-test-id="customdialog-canclebtn-view-viewresponsible-reinstatement-responsibles-table-list-page-reinstatement"]').click(); // Close icon 
+    // searchUser()
+  })
 
-    // Match checkout text
-    cy.get('[data-test-id="list-item-AO-autocompletefilter-destop-filter-headquarter-page-reinstatement"]').click()
-    cy.wait(500)
-    cy.get('[data-test-id="list-item-CL-autocompletefilter-destop-filter-headquarter-page-reinstatement"]').click()
-    cy.wait(500)
-    cy.get('[data-test-id="list-item-DZ-autocompletefilter-destop-filter-headquarter-page-reinstatement"]').click()
-    cy.wait(500)
-    cy.get('body').click(0, 0); // closed
-    cy.get('[data-test-id="icon-cancel-autocompletefilter-destop-filter-headquarter-page-reinstatement"]').click(); //cross icon
-    cy.get('[data-test-id="clear-btn-header-page-reinstatement"]').click();
 
-    //click on three triple lines
-    cy.get('[data-test-id="appbar-menu-btn"]').click({ force: true });
-    cy.get('[data-test-id="layout-sidebar-container"]').should('have.css', 'width', '71.98863220214844px');
-    cy.get('[data-test-id="appbar-menu-btn"]').click();
-  });
+  it('User edit', async () => {
+    const userData = createUserData()
 
-  //Pagintaion
-  it.skip('pagination', () => {
-    cy.visit('http://localhost:3000/reinstatement-responsibles')
-    cy.wait(1000)
-    // cy.get('[data-testid="KeyboardArrowRightIcon"]').click()
-    cy.get('.mui-1wgbp7b').click()
-    cy.wait(1000)
-    cy.get('.mui-1deacqj').click()
-})
+    const uuid = await searchUUID()
+    cy.get(`[data-test-id="tablebodycell-${uuid}-editicon-desktoptable-reinstatement-responsibles-table-list-page-reinstatement"]`).click()
+    cy.get('[data-test-id="modal-title-responsiblitiesform-edit"]').should('contain', "Edit Reinstatement Responsible")
+      cy.get('[data-test-id="customtextfield-input-responsiblelastname-responsiblitiesform-edit"]')  
+        .clear().type(userData.lastName);
+      cy.get('[data-test-id="custombtn-modal-responsiblitiesform-edit-submit"]').click();  // Click on update button
+  
+      cy.get('[data-test-id="dialogBox-title-alertBox-responsiblitiesform-edit"]').should('contain', 'Edit Reinstatement Responsible')
+      cy.get('[data-test-id="dialogBox-content-alertBox-responsiblitiesform-edit"]').should('contain', 'Are you sure you want to save the changes?')
+  
+      cy.get('[data-test-id="custombtn-dialogBox-submit-alertBox-responsiblitiesform-edit"]').click(); // Click on accept button
+      cy.get('#notistack-snackbar > .MuiBox-root').should('contain', "Saved successfully")
+      cy.wait(500)
+  
+  })
+
 
 
 })
